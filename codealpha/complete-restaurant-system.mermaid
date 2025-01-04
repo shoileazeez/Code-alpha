@@ -1,0 +1,218 @@
+erDiagram
+    %% User Management and Authentication
+    User ||--o| Customer : is_customer
+    User ||--o| Staff : is_staff
+    User ||--o{ UserActivity : performs
+    User ||--o{ Notification : receives
+    
+    %% Staff Management
+    Staff ||--|| StaffRole : has
+    Staff ||--|| VerificationRecord : has
+    VerificationRecord ||--o{ VerificationStep : contains
+    
+    %% Restaurant Operations
+    Customer ||--o{ Reservation : makes
+    Customer ||--o{ Order : places
+    Table ||--o{ Reservation : has
+    Table ||--o{ Order : associated_with
+    
+    %% Menu and Inventory
+    MenuItem ||--o{ OrderItem : contains
+    MenuItem ||--o{ MenuCategory : belongs_to
+    Order ||--o{ OrderItem : includes
+    MenuItem ||--o{ RecipeItem : requires
+    Inventory ||--o{ RecipeItem : used_in
+    
+    %% Staff Operations
+    Staff ||--o{ Order : processes
+    Staff ||--o{ Shift : works
+    
+    %% Financial
+    Order ||--o{ Payment : has
+    Payment ||--o{ TransactionHistory : generates
+
+    User {
+        int id PK
+        string username
+        string email
+        string password_hash
+        enum user_type "CUSTOMER/STAFF"
+        enum status "PENDING/VERIFIED/ACTIVE/REJECTED"
+        datetime last_login
+        datetime created_at
+        string reset_token
+        datetime reset_token_expiry
+    }
+
+    VerificationRecord {
+        int id PK
+        int staff_id FK
+        enum status "IN_PROGRESS/COMPLETED/FAILED"
+        datetime started_at
+        datetime completed_at
+        json verification_results
+        string failure_reason
+    }
+
+    VerificationStep {
+        int id PK
+        int verification_record_id FK
+        string step_type "EMAIL/PHONE/DOCUMENT/EMPLOYEE_ID"
+        enum status "PENDING/PASSED/FAILED"
+        datetime verified_at
+        json verification_data
+        string failure_reason
+    }
+
+    StaffRole {
+        int id PK
+        int staff_id FK
+        enum role_type "ADMIN/MANAGER/KITCHEN_STAFF/WAITER/CUSTOMER_SERVICE"
+        datetime assigned_at
+        boolean auto_assigned
+    }
+
+    UserActivity {
+        int id PK
+        int user_id FK
+        string activity_type
+        text description
+        json activity_data
+        datetime created_at
+        string ip_address
+    }
+
+    Notification {
+        int id PK
+        int user_id FK
+        string title
+        text message
+        boolean is_read
+        datetime created_at
+        string notification_type
+        json additional_data
+    }
+
+    TransactionHistory {
+        int id PK
+        int payment_id FK
+        string transaction_type
+        decimal amount
+        string status
+        datetime created_at
+        text description
+        json metadata
+    }
+    
+    Customer {
+        int id PK
+        int user_id FK
+        string phone
+        string address
+        text preferences
+        int loyalty_points
+        datetime last_order_date
+    }
+    
+    Staff {
+        int id PK
+        int user_id FK
+        string phone
+        string employee_id
+        datetime hire_date
+        decimal hourly_rate
+        string emergency_contact
+        boolean is_active
+        json verification_documents
+    }
+    
+    Payment {
+        int id PK
+        int order_id FK
+        decimal amount
+        string payment_method
+        string transaction_id
+        datetime payment_time
+        string status
+        text notes
+    }
+    
+    Reservation {
+        int id PK
+        int customer_id FK
+        int table_id FK
+        datetime reservation_time
+        int party_size
+        string status
+        text special_requests
+    }
+    
+    Table {
+        int id PK
+        string table_number
+        int capacity
+        string status
+        string location
+    }
+    
+    Order {
+        int id PK
+        int customer_id FK
+        int table_id FK
+        int staff_id FK
+        datetime order_time
+        decimal total_amount
+        string status
+        string payment_status
+    }
+    
+    MenuItem {
+        int id PK
+        string name
+        text description
+        decimal price
+        boolean available
+        int category_id FK
+        json nutritional_info
+    }
+    
+    MenuCategory {
+        int id PK
+        string name
+        string description
+    }
+    
+    OrderItem {
+        int id PK
+        int order_id FK
+        int menu_item_id FK
+        int quantity
+        decimal unit_price
+        text special_instructions
+    }
+    
+    Inventory {
+        int id PK
+        string item_name
+        decimal quantity
+        string unit
+        decimal unit_price
+        int reorder_level
+        datetime last_restocked
+    }
+    
+    RecipeItem {
+        int id PK
+        int menu_item_id FK
+        int inventory_id FK
+        decimal quantity_required
+        string unit
+    }
+    
+    Shift {
+        int id PK
+        int staff_id FK
+        datetime start_time
+        datetime end_time
+        string shift_type
+    }
